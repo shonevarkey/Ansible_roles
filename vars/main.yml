@@ -1,0 +1,17 @@
+---
+# vars file for lamp
+
+domain: www.example.com
+
+# Apache Related Variables
+
+httpd_port: 80
+httpd_owner: apache
+httpd_group: apache
+
+# Mariadb Related Variables
+
+mysql_root: "mysqlroot123"
+mysql_user: "wpuser"
+mysql_password: "wpuser123"
+mysql_database: "wordpress"

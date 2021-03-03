@@ -1,0 +1,104 @@
+---
+
+- name: "Apache  - Installing httpd"
+  yum:
+    name: httpd
+    state: present
+  notify:
+    - httpd-restart
+    
+- name: "Apache  - Installing php & Extensions"
+  yum:
+    name:
+      - php
+      - php-mysql
+  notify:
+    - httpd-restart
+    
+- name: "Apache  - Creating httpd.conf"
+  template:
+    src: httpd.conf.tmpl
+    dest: /etc/httpd/conf/httpd.conf
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  notify:
+    - httpd-restart
+    
+        
+- name: "Apache  - Creating Virtualhost"
+  template:
+    src: virtualhost.conf.tmpl
+    dest: "/etc/httpd/conf.d/{{ domain }}.conf"
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  notify:
+    - httpd-restart
+    
+- name: "Apache  - DocumentRoot Creation"
+  file:
+    path: "/var/www/html/{{ domain }}"
+    state: directory
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  notify:
+    - httpd-restart
+    
+    
+- name: "Apache  - Creating test.php & test.html"
+  copy:
+    src: "{{ item }}"
+    dest: "/var/www/html/{{ domain }}/"
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  with_items:
+    - test.php
+    - test.html
+  notify:
+    - httpd-restart
+    
+        
+- name: "Mariadb - Installation"
+  yum:
+    name:
+      - mariadb-server
+      - MySQL-python
+    state: present
+
+- name: "Mariadb - Restart/Enable"
+  service:
+    name: mariadb
+    state: restarted
+    enabled: true
+        
+- name: "Mariadb - Resetting Root Password"
+  ignore_errors: true
+  mysql_user:
+    login_user: root
+    login_password: ""
+    user: root
+    password: "{{ mysql_root }}"
+    host_all: true
+        
+- name: "Mariadb - Anonymous Users"
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root }}"
+    user: ""
+    state: absent
+    host_all: true
+        
+- name: "Mariadb - Creating Extra Database"
+  mysql_db:
+    login_user: root
+    login_password: "{{ mysql_root }}"
+    name: "{{ mysql_database }}"
+    state: present
+        
+- name: "Mariadb - Creating Extra User"
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root }}"
+    user: "{{ mysql_user }}"
+    password: "{{ mysql_password }}"
+    state: present
+    priv: "{{ mysql_database }}.*:ALL"
